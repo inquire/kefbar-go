@@ -1,0 +1,7 @@
+# Others
+.scratch/
+build/*
+
+# Binaries
+kefbar 
+kefbar-go
