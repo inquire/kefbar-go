@@ -3,7 +3,7 @@
 > A sleek macOS menu bar app to control your KEF wireless speakers
 
 <!-- Update the Build badge URL to match your GitHub repository -->
-[![Build](https://github.com/YOUR_USERNAME/kefbar-go/actions/workflows/build.yaml/badge.svg)](https://github.com/YOUR_USERNAME/kefbar-go/actions/workflows/build.yaml)
+[![Build](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml/badge.svg)](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
 ![macOS](https://img.shields.io/badge/macOS-11.0+-000000?style=flat&logo=apple)
 ![License](https://img.shields.io/badge/license-MIT-green)
