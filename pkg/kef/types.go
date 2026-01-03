@@ -44,3 +44,4 @@ type Speaker interface {
 	// Info
 	GetSpeakerModel() (string, error)
 }
+

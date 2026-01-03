@@ -22,3 +22,4 @@ func Discover(ctx context.Context, timeout time.Duration) (string, error) {
 	// Fallback to network scanning
 	return DiscoverViaNetworkScan(ctx, timeout/2)
 }
+

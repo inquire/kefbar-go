@@ -3,7 +3,7 @@
 > A sleek macOS menu bar app to control your KEF wireless speakers
 
 <!-- Update the Build badge URL to match your GitHub repository -->
-[![Build](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml/badge.svg)](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml)
+[![Build][![Build](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml/badge.svg)](https://github.com/inquire/kefbar-go/actions/workflows/build.yaml)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)
 ![macOS](https://img.shields.io/badge/macOS-11.0+-000000?style=flat&logo=apple)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -17,11 +17,12 @@
 | Feature | Description |
 |---------|-------------|
 | 🎚️ **Volume Control** | Adjust volume with customizable keyboard shortcuts |
-| ⌨️ **Configurable Hotkeys** | Set your own keyboard shortcuts for volume control |
+| ⌨️ **Configurable Hotkeys** | Set your own keyboard shortcuts for volume and play/pause |
 | 📊 **Visual Volume Indicator** | Menu bar icon shows current volume level as a fill indicator |
 | 🔍 **Auto-Discovery** | Automatically finds KEF speakers on your network |
 | 🎵 **Now Playing** | See what's currently playing on your speaker |
-| ⏭️ **Playback Control** | Skip tracks without leaving your keyboard |
+| ⏯️ **Play/Pause** | Toggle playback with Cmd+Shift+Space |
+| ⏭️ **Track Control** | Skip tracks without leaving your keyboard |
 | 🏷️ **Model Detection** | Identifies your speaker model (LSX II, LS50W2, etc.) |
 
 ## 🖼️ How It Works
@@ -36,7 +37,7 @@ Click the icon to see:
 - 📡 Connection status with speaker model
 - 🔊 Current volume percentage (clickable to set volume)
 - 🎵 Now playing information
-- ⏮️ ⏭️ Playback controls
+- ⏮️ ▶️/⏸️ ⏭️ Playback controls (previous, play/pause, next)
 - 🔍 Speaker discovery
 - ⚙️ Speaker settings
 - ⌨️ Hotkey settings (with current bindings displayed)
@@ -47,6 +48,7 @@ Click the icon to see:
 |----------|--------|
 | `Cmd + Shift + ↑` | Volume Up (+5%) |
 | `Cmd + Shift + ↓` | Volume Down (-5%) |
+| `Cmd + Shift + Space` | Play/Pause toggle |
 
 ### 🔧 Customizing Hotkeys
 
@@ -56,7 +58,7 @@ You can customize the keyboard shortcuts:
 2. Select "⌨️ Hotkey Settings"
 3. Configure your preferred modifiers and keys:
    - **Modifiers**: Cmd, Ctrl, Alt, Shift (or combinations like Cmd+Shift)
-   - **Keys**: Arrow keys, F1-F12, or [ ] = -
+   - **Keys**: Arrow keys, > < . , P, S, Space, F1-F12, or [ ] = -
 
 Settings are saved to `~/.kefbar.json` and persist across restarts.
 

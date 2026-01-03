@@ -220,6 +220,32 @@ func (c *Controller) PreviousTrack() error {
 	return nil
 }
 
+// PlayPause toggles between play and pause.
+// KEF speakers use "pause" as a toggle command.
+func (c *Controller) PlayPause() error {
+	// KEF treats "pause" as a play/pause toggle
+	slog.Info("Sending pause toggle command")
+	err := c.client.SetData("player:player/control", "activate", `{"control":"pause"}`)
+	if err != nil {
+		return err
+	}
+
+	// Refresh playback info after a delay
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		_, _ = c.GetPlaybackInfo()
+	}()
+
+	return nil
+}
+
+// IsPlaying returns true if currently playing.
+func (c *Controller) IsPlaying() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.state.PlaybackInfo != nil && c.state.PlaybackInfo.State == "playing"
+}
+
 // GetPlaybackInfo retrieves current playback information.
 func (c *Controller) GetPlaybackInfo() (*kef.PlaybackInfo, error) {
 	result, err := c.client.GetData("player:player/data", "value")

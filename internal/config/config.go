@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,8 @@ const (
 	DefaultVolumeUpKey         = "Up"
 	DefaultVolumeDownModifiers = "Cmd+Shift"
 	DefaultVolumeDownKey       = "Down"
+	DefaultPlayPauseModifiers = "Cmd+Shift"
+	DefaultPlayPauseKey       = "Space"
 )
 
 // HotkeyBinding represents a keyboard shortcut configuration.
@@ -35,10 +38,30 @@ type HotkeyBinding struct {
 
 // String returns a human-readable representation of the hotkey.
 func (h HotkeyBinding) String() string {
-	if h.Modifiers == "" {
-		return h.Key
+	// Display shifted keys in a user-friendly way
+	key := h.Key
+	mods := h.Modifiers
+
+	// If Shift is in modifiers and key is a shiftable character, show the shifted version
+	if strings.Contains(mods, "Shift") {
+		switch key {
+		case ".":
+			key = ">"
+			mods = strings.Replace(mods, "+Shift", "", 1)
+			mods = strings.Replace(mods, "Shift+", "", 1)
+			mods = strings.Replace(mods, "Shift", "", 1)
+		case ",":
+			key = "<"
+			mods = strings.Replace(mods, "+Shift", "", 1)
+			mods = strings.Replace(mods, "Shift+", "", 1)
+			mods = strings.Replace(mods, "Shift", "", 1)
+		}
 	}
-	return h.Modifiers + "+" + h.Key
+
+	if mods == "" {
+		return key
+	}
+	return mods + "+" + key
 }
 
 // Config holds the application configuration.
@@ -46,8 +69,9 @@ type Config struct {
 	SpeakerIP        string        `json:"speaker_ip"`
 	Port             int           `json:"port"`
 	VolumeStep       int           `json:"volume_step"`
-	VolumeUpHotkey   HotkeyBinding `json:"volume_up_hotkey"`
-	VolumeDownHotkey HotkeyBinding `json:"volume_down_hotkey"`
+	VolumeUpHotkey    HotkeyBinding `json:"volume_up_hotkey"`
+	VolumeDownHotkey  HotkeyBinding `json:"volume_down_hotkey"`
+	PlayPauseHotkey   HotkeyBinding `json:"play_pause_hotkey"`
 
 	// Non-persisted runtime values
 	PollInterval time.Duration `json:"-"`
@@ -68,6 +92,10 @@ func New() *Config {
 		VolumeDownHotkey: HotkeyBinding{
 			Modifiers: DefaultVolumeDownModifiers,
 			Key:       DefaultVolumeDownKey,
+		},
+		PlayPauseHotkey: HotkeyBinding{
+			Modifiers: DefaultPlayPauseModifiers,
+			Key:       DefaultPlayPauseKey,
 		},
 	}
 }
@@ -176,6 +204,13 @@ var AvailableKeys = []string{
 	"Down",
 	"Left",
 	"Right",
+	">",
+	"<",
+	".",
+	",",
+	"P",
+	"S",
+	"Space",
 	"F1",
 	"F2",
 	"F3",

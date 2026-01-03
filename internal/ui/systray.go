@@ -14,10 +14,11 @@ import (
 
 // App represents the systray application.
 type App struct {
-	ctrl              *controller.Controller
-	cfg               *config.Config
-	lastVolume        int
-	onHotkeyUpdate    func()
+	ctrl           *controller.Controller
+	cfg            *config.Config
+	lastVolume     int
+	onHotkeyUpdate func()
+	playPauseItem  *systray.MenuItem
 }
 
 // NewApp creates a new systray application.
@@ -58,6 +59,7 @@ func (a *App) onReady() {
 	systray.AddSeparator()
 
 	prevItem := systray.AddMenuItem("⏮️ Previous Track", "")
+	a.playPauseItem = systray.AddMenuItem("⏸️ Pause", "")
 	nextItem := systray.AddMenuItem("⏭️ Next Track", "")
 
 	systray.AddSeparator()
@@ -69,12 +71,13 @@ func (a *App) onReady() {
 	// Settings submenu
 	settingsItem := systray.AddMenuItem("⚙️ Speaker Settings", "")
 	hotkeyItem := systray.AddMenuItem("⌨️ Hotkey Settings", "")
-	
+
 	// Show current hotkey bindings
 	hotkeyInfoItem := systray.AddMenuItem(
-		fmt.Sprintf("   Vol+: %s  Vol-: %s", 
-			a.cfg.VolumeUpHotkey.String(), 
-			a.cfg.VolumeDownHotkey.String()),
+		fmt.Sprintf("   Vol+: %s  Vol-: %s  Play/Pause: %s",
+			a.cfg.VolumeUpHotkey.String(),
+			a.cfg.VolumeDownHotkey.String(),
+			a.cfg.PlayPauseHotkey.String()),
 		"")
 	hotkeyInfoItem.Disable()
 
@@ -125,14 +128,23 @@ func (a *App) updateLoop(statusItem, volumeItem, playbackItem, hotkeyInfoItem *s
 					title += " - " + info.Artist
 				}
 				playbackItem.SetTitle("🎵 " + title)
+
+				// Update play/pause button based on state
+				if info.State == "playing" {
+					a.playPauseItem.SetTitle("⏸️ Pause")
+				} else {
+					a.playPauseItem.SetTitle("▶️ Play")
+				}
 			} else {
 				playbackItem.SetTitle("🎵 No playback info")
+				a.playPauseItem.SetTitle("▶️ Play")
 			}
 		} else {
 			statusItem.SetTitle("🔌 Not Connected")
 			volumeItem.SetTitle("🔊 Volume: --")
 			volumeItem.Disable()
 			playbackItem.SetTitle("🎵 No playback info")
+			a.playPauseItem.SetTitle("▶️ Play")
 
 			if a.lastVolume != -1 {
 				systray.SetIcon(GenerateVolumeIcon(0))
@@ -145,9 +157,10 @@ func (a *App) updateLoop(statusItem, volumeItem, playbackItem, hotkeyInfoItem *s
 		}
 
 		// Update hotkey info display
-		hotkeyInfoItem.SetTitle(fmt.Sprintf("   Vol+: %s  Vol-: %s",
+		hotkeyInfoItem.SetTitle(fmt.Sprintf("   Vol+: %s  Vol-: %s  Play/Pause: %s",
 			a.cfg.VolumeUpHotkey.String(),
-			a.cfg.VolumeDownHotkey.String()))
+			a.cfg.VolumeDownHotkey.String(),
+			a.cfg.PlayPauseHotkey.String()))
 	}
 }
 
@@ -162,6 +175,17 @@ func (a *App) handleMenuClicks(
 			slog.Info("Previous track requested")
 			if err := a.ctrl.PreviousTrack(); err != nil {
 				slog.Error("Failed to skip previous", "error", err)
+			}
+
+		case <-a.playPauseItem.ClickedCh:
+			wasPlaying := a.ctrl.IsPlaying()
+			if wasPlaying {
+				slog.Info("Pause requested")
+			} else {
+				slog.Info("Play requested")
+			}
+			if err := a.ctrl.PlayPause(); err != nil {
+				slog.Error("Failed to toggle play/pause", "error", err)
 			}
 
 		case <-nextItem.ClickedCh:

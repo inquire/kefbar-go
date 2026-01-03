@@ -13,13 +13,15 @@ import (
 
 // Manager handles global hotkey registration.
 type Manager struct {
-	ctrl   *controller.Controller
-	cfg    *config.Config
-	hkUp   *hotkey.Hotkey
-	hkDown *hotkey.Hotkey
-	mu     sync.Mutex
-	stopUp   chan struct{}
-	stopDown chan struct{}
+	ctrl          *controller.Controller
+	cfg           *config.Config
+	hkUp          *hotkey.Hotkey
+	hkDown        *hotkey.Hotkey
+	hkPlayPause   *hotkey.Hotkey
+	mu            sync.Mutex
+	stopUp        chan struct{}
+	stopDown      chan struct{}
+	stopPlayPause chan struct{}
 }
 
 // NewManager creates a new hotkey manager.
@@ -30,16 +32,18 @@ func NewManager(ctrl *controller.Controller, cfg *config.Config) *Manager {
 	}
 }
 
-// Register registers global hotkeys for volume control.
+// Register registers global hotkeys for playback control.
 func (m *Manager) Register() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.stopUp = make(chan struct{})
 	m.stopDown = make(chan struct{})
+	m.stopPlayPause = make(chan struct{})
 
 	go m.registerVolumeUp()
 	go m.registerVolumeDown()
+	go m.registerPlayPause()
 }
 
 // Reregister unregisters and re-registers hotkeys with new config.
@@ -128,6 +132,49 @@ func (m *Manager) registerVolumeDown() {
 	}
 }
 
+// registerPlayPause sets up the play/pause hotkey.
+func (m *Manager) registerPlayPause() {
+	modifiers := parseModifiers(m.cfg.PlayPauseHotkey.Modifiers)
+	key := parseKey(m.cfg.PlayPauseHotkey.Key)
+
+	if key == 0 {
+		slog.Warn("Invalid play/pause key", "key", m.cfg.PlayPauseHotkey.Key)
+		return
+	}
+
+	m.hkPlayPause = hotkey.New(modifiers, key)
+
+	if err := m.hkPlayPause.Register(); err != nil {
+		slog.Warn("Failed to register play/pause hotkey", "error", err, "binding", m.cfg.PlayPauseHotkey.String())
+		return
+	}
+
+	slog.Info("Registered play/pause hotkey", "binding", m.cfg.PlayPauseHotkey.String())
+
+	for {
+		select {
+		case <-m.stopPlayPause:
+			return
+		case <-m.hkPlayPause.Keydown():
+			state := m.ctrl.GetState()
+			if !state.Connected {
+				continue
+			}
+
+			wasPlaying := m.ctrl.IsPlaying()
+			if err := m.ctrl.PlayPause(); err != nil {
+				slog.Error("Failed to toggle play/pause via hotkey", "error", err)
+			} else {
+				if wasPlaying {
+					slog.Info("Paused via hotkey")
+				} else {
+					slog.Info("Playing via hotkey")
+				}
+			}
+		}
+	}
+}
+
 // Unregister unregisters all hotkeys.
 func (m *Manager) Unregister() {
 	m.mu.Lock()
@@ -139,6 +186,9 @@ func (m *Manager) Unregister() {
 	if m.stopDown != nil {
 		close(m.stopDown)
 	}
+	if m.stopPlayPause != nil {
+		close(m.stopPlayPause)
+	}
 
 	if m.hkUp != nil {
 		_ = m.hkUp.Unregister()
@@ -147,6 +197,10 @@ func (m *Manager) Unregister() {
 	if m.hkDown != nil {
 		_ = m.hkDown.Unregister()
 		m.hkDown = nil
+	}
+	if m.hkPlayPause != nil {
+		_ = m.hkPlayPause.Unregister()
+		m.hkPlayPause = nil
 	}
 }
 
@@ -182,6 +236,20 @@ func parseKey(s string) hotkey.Key {
 		return hotkey.KeyLeft
 	case "right":
 		return hotkey.KeyRight
+	case "p":
+		return hotkey.Key('P')
+	case "s":
+		return hotkey.Key('S')
+	case ">":
+		return hotkey.Key('>')
+	case "<":
+		return hotkey.Key('<')
+	case ".":
+		return hotkey.Key('.')
+	case ",":
+		return hotkey.Key(',')
+	case "space":
+		return hotkey.KeySpace
 	case "f1":
 		return hotkey.KeyF1
 	case "f2":
